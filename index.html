@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دار فريدة للأزياء التراثية </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .invoice-box {
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-radius: 12px;
+        }
+        .section-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; }
+            .invoice-box { box-shadow: none; border: none; width: 100%; margin: 0; padding: 0;}
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            width: 150px;
+            margin-top: 40px;
+        }
+        .hidden-section {
+            display: none;
+        }
+        .customer-item {
+            border-right: 4px solid #4f46e5;
+            transition: all 0.2s;
+        }
+        .customer-item:hover {
+            background-color: #f5f7ff;
+        }
+        .terms-text {
+            line-height: 1.6;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="app" class="max-w-7xl mx-auto">
+        
+        <!-- Dashboard / Editor Mode -->
+        <div class="no-print mb-8">
+            <h1 class="text-3xl font-bold text-indigo-900 mb-6 text-center"> دار فريدة للأزياء التراثية</h1>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                
+                <!-- السجلات -->
+                <div class="lg:col-span-1">
+                    <div class="section-card bg-white border-t-4 border-indigo-600">
+                        <h2 class="text-lg font-bold text-indigo-800 mb-4 flex items-center justify-between">
+                             <span>العملاء </span>
+                             <span id="cust_count" class="text-xs bg-indigo-100 px-2 py-1 rounded text-indigo-600">0</span>
+                        </h2>
+                        <div id="customers_list" class="space-y-3 max-h-[700px] overflow-y-auto pr-1"></div>
+                        <div class="mt-4 pt-4 border-t">
+                            <button onclick="clearAllFields()" class="w-full bg-gray-100 text-gray-700 py-2 rounded text-sm font-semibold hover:bg-gray-200 transition">إضافة سجل جديد +</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- إدخال البيانات -->
+                <div class="lg:col-span-2">
+                    <div class="section-card border-r-4 border-indigo-500">
+                        <h2 class="text-lg font-bold text-indigo-800 border-b pb-2 mb-4">بيانات العميل والعقد</h2>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <input type="text" id="cust_name" class="border p-2 rounded" placeholder="اسم العميل">
+                                <input type="number" id="cust_id" class="border p-2 rounded" placeholder="رقم الهوية">
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <input type="number" id="cust_phone" class="border p-2 rounded" placeholder="رقم الجوال">
+                                <input type="text" id="inv_no" class="border p-2 rounded" placeholder="رقم الفاتورة">
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <input type="number" id="daily_rate" oninput="updatePreview()" class="border p-2 rounded w-full" placeholder="سعر الإيجار اليومي">
+                                <input type="number" id="deposit_price" oninput="updatePreview()" class="border p-2 rounded w-full font-bold" placeholder="مبلغ التأمين">
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-[10px] text-gray-500 block">تاريخ الاستلام</label>
+                                    <input type="date" id="date_end" class="border p-2 rounded w-full" onchange="updatePreview()">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-gray-500 block">تاريخ الإرجاع المقرر</label>
+                                    <input type="date" id="date_end" class="border p-2 rounded w-full" onchange="updatePreview()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- إضافة منتجات -->
+                        <div class="mb-4 pt-4 border-t">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-sm font-bold text-indigo-900">المنتجات المستأجرة:</h3>
+                                <button onclick="addItemRow()" class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-200 font-bold transition">+ إضافة منتج جديد</button>
+                            </div>
+                            <div id="items_container" class="space-y-2"></div>
+                        </div>
+                        
+                        <!-- الشروط في المحرر -->
+                        <div class="bg-indigo-50 p-4 rounded mb-4 border border-indigo-100">
+                            <div class="terms-text text-indigo-900 mb-3 text-right">
+                                <p class="font-bold mb-1">شروط عقد الإيجار:</p>
+                                <ol class="list-decimal list-inside space-y-1">
+                                    <li>يقر المستأجر باستلام القطعة بحالة سليمة وخالية من العيوب.</li>
+                                    <li>في حال التلف أو التمزق أو الاتساخ غير القابل للتنظيف أو فقدان أي جزء، يحق للمحل خصم التأمين أو مطالبة المستأجر بالقيمة الكاملة.</li>
+                                    <li>يمنع غسل أو تعديل أو قص القطعة أو استخدام مواد تجميلية تسبب بقعاً.</li>
+                                    <li>التأخير في الإرجاع يترتب عليه غرامة يومية بقيمة الإيجار عن كل يوم.</li>
+                                    <li>في حال الفقدان الكامل، يلتزم المستأجر بدفع القيمة السوقية للقطعة.</li>
+                                    <li>لا يحق للمستأجر تأجير القطعة لطرف آخر.</li>
+                                    <li>مبلغ التأمين يسترد بعد فحص القطعة.</li>
+                                    <li>هذه الفاتورة تعتبر عقداً ملزماً للطرفين.</li>
+                                </ol>
+                            </div>
+                            <label class="flex items-start gap-2 cursor-pointer bg-white p-2 rounded border border-indigo-200">
+                                <input type="checkbox" id="terms_approval" class="w-5 h-5 mt-0.5">
+                                <span class="text-xs text-indigo-900 font-bold italic">أوافق على جميع بنود العقد أعلاه.</span>
+                            </label>
+                        </div>
+
+                        <button onclick="saveCurrentCustomer()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-lg mb-6">حفظ واعتماد السجل</button>
+                    </div>
+
+                    <!-- قسم تسوية الإرجاع -->
+                    <div class="section-card border-r-4 border-orange-500 bg-orange-50/30">
+                        <h2 class="text-lg font-bold text-orange-700 border-b pb-2 mb-4">فحص الإرجاع والتسوية</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="text-xs text-gray-600 block mb-1">تاريخ الإرجاع </label>
+                                <input type="date" id="actual_return_date" onchange="updatePreview()" class="border p-2 rounded w-full">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-600 block mb-1">حالة القطعة</label>
+                                <select id="item_status" onchange="toggleStatusSections()" class="border p-2 rounded w-full font-bold">
+                                    <option value="safe">سليم</option>
+                                    <option value="lost">مفقود</option>
+                                    <option value="damaged">تالف / تعديلات</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- خيارات التلف وتفاصيل التسوية -->
+                        <div id="extra_inspection_fields" class="hidden-section">
+                            <div id="damage_options" class="bg-white p-3 rounded border mb-4">
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                   <label><input type="checkbox" name="damage_type" value="غسل" onchange="updatePreview()"> غسل</label>
+                                   <label><input type="checkbox" name="damage_type" value="تعديل" onchange="updatePreview()"> تعديل</label>
+                                   <label><input type="checkbox" name="damage_type" value="بقع " onchange="updatePreview()"> بقع</label>
+                                   <label><input type="checkbox" name="damage_type" value="تمزق\كسر" onchange="updatePreview()"> تمزق\كسر</label>
+                                </div>
+                            </div>
+                            <input type="number" id="damage_fee" oninput="updatePreview()" class="border p-2 rounded w-full mb-2" placeholder="غرامة التلف">
+                            <input type="text" id="inspection_notes" oninput="updatePreview()" class="border p-2 rounded w-full" placeholder="ملاحظات الفحص">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- التحكم في الطباعة -->
+                <div class="lg:col-span-1">
+                    <div class="section-card sticky top-4 bg-white border border-gray-200">
+                        <h2 class="text-lg font-bold text-indigo-900 mb-4">خيارات الطباعة</h2>
+                        <div class="space-y-3 mb-6">
+                            <label class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-indigo-50 transition">
+                                <input type="radio" name="print_type" value="receive" checked onchange="updatePreview()">
+                                <span class="font-bold text-sm">فاتورة استلام</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-orange-50 transition">
+                                <input type="radio" name="print_type" value="return" onchange="updatePreview()">
+                                <span class="font-bold text-sm text-orange-700">فاتورة إرجاع (تسوية)</span>
+                            </label>
+                        </div>
+                        <button onclick="window.print()" class="w-full bg-indigo-900 text-white font-bold py-3 rounded-lg shadow hover:bg-black transition">طباعة المستند</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- المنطقة القابلة للطباعة -->
+        <div id="invoice" class="invoice-box p-12 text-gray-800">
+            <div class="flex justify-between items-start border-b-4 border-indigo-900 pb-6 mb-8">
+                <div>
+                    <h2 class="text-3xl font-black text-indigo-900 mb-1">دار فريدة للأزياء</h2>
+                    <p id="invoice_title" class="text-lg font-bold text-gray-600">عقد استلام قطعة إيجار</p>
+                </div>
+                <div class="text-left font-bold text-sm">
+                    <p>رقم الفاتورة: <span id="view_inv_no">---</span></p>
+                    <p class="text-xs text-gray-400 mt-1">تاريخ: <span id="print_date"></span></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-8 mb-8 text-sm">
+                <div class="bg-gray-50 p-4 rounded-lg border">
+                    <h3 class="font-black text-indigo-800 border-b mb-2">بيانات المستأجر</h3>
+                    <p>الاسم: <span id="view_cust_name" class="font-bold">---</span></p>
+                    <p>الجوال: <span id="view_cust_phone" class="font-bold">---</span></p>
+                    <p>الهوية: <span id="view_cust_id">---</span></p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg border">
+                    <h3 class="font-black text-indigo-800 border-b mb-2">مواعيد العقد</h3>
+                    <p>تاريخ الاستلام: <span id="view_date_start">---</span></p>
+                    <p>الإرجاع المتوقع: <span id="view_date_end" class="font-bold text-red-600">---</span></p>
+                </div>
+            </div>
+
+            <!-- جدول المنتجات -->
+            <div class="mb-8">
+                <h3 class="font-bold text-indigo-900 mb-2 underline">قائمة القطع المستلمة:</h3>
+                <table class="w-full text-right border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="border p-2 w-10">#</th>
+                            <th class="border p-2">المنتج / الوصف</th>
+                            <th class="border p-2 w-20 text-center">العدد</th>
+                        </tr>
+                    </thead>
+                    <tbody id="view_items_list"></tbody>
+                </table>
+            </div>
+
+            <!-- تفاصيل الاستلام (تظهر بها الشروط) -->
+            <div id="content_receive">
+                <div class="flex justify-between items-center p-4 bg-indigo-900 text-white rounded mb-6">
+                    <span class="text-lg font-bold">إجمالي مبلغ التأمين المودع:</span>
+                    <span id="view_deposit" class="text-2xl font-black">0 ر.س</span>
+                </div>
+                
+                <!-- شروط العقد المطبوعة -->
+                <div class="bg-gray-50 p-4 rounded border border-gray-200 mb-8">
+                    <h4 class="text-xs font-bold text-indigo-900 mb-2 border-b pb-1">شروط عقد الإيجار:</h4>
+                    <ul class="text-[10px] leading-relaxed text-gray-700 space-y-1">
+                        <li>1. يقر المستأجر باستلام القطعة بحالة سليمة وخالية من العيوب.</li>
+                        <li>2. في حال التلف أو التمزق أو الاتساخ غير القابل للتنظيف أو فقدان أي جزء، يحق للمحل خصم التأمين أو المطالبة بالقيمة الكاملة.</li>
+                        <li>3. يمنع غسل أو تعديل أو قص القطعة أو استخدام مواد تجميلية تسبب بقعاً.</li>
+                        <li>4. التأخير في الإرجاع يترتب عليه غرامة يومية بقيمة الإيجار عن كل يوم.</li>
+                        <li>5. في حال الفقدان الكامل، يلتزم المستأجر بدفع القيمة السوقية للقطعة.</li>
+                        <li>6. لا يحق للمستأجر تأجير القطعة لطرف آخر.</li>
+                        <li>7. مبلغ التأمين يسترد بعد فحص القطعة.</li>
+                        <li>8. هذه الفاتورة تعتبر عقداً ملزماً للطرفين.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- تفاصيل الإرجاع -->
+            <div id="content_return" class="hidden text-sm">
+                 <h3 class="font-bold text-orange-700 mb-2 border-b pb-1">تقرير الإرجاع والتسوية:</h3>
+                 <table class="w-full text-right border-collapse mb-4">
+                    <thead>
+                        <tr class="bg-orange-700 text-white">
+                            <th class="p-2 border">بند التسوية</th>
+                            <th class="p-2 border text-left">المبلغ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="p-2 border">مبلغ التأمين المودع</td><td id="ret_deposit" class="p-2 border text-left">0</td></tr>
+                        <tr><td class="p-2 border">غرامة تأخير (أيام التأخير: <span id="ret_days">0</span>)</td><td id="ret_late" class="p-2 border text-left text-red-600">0</td></tr>
+                        <tr><td class="p-2 border">غرامة تلفيات (<span id="ret_dmg_list">سليم</span>)</td><td id="ret_damage" class="p-2 border text-left text-red-600">0</td></tr>
+                        <tr class="font-bold bg-green-50"><td class="p-2 border">المبلغ الصافي المسترد للعميل</td><td id="ret_final" class="p-2 border text-left text-green-700">0</td></tr>
+                    </tbody>
+                 </table>
+                 <div class="p-3 bg-gray-50 border rounded text-xs mb-8">
+                     <b>ملاحظات الفحص:</b> <span id="view_inspection_notes">لا توجد ملاحظات</span>
+                 </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-24 text-center mt-12">
+                <div>
+                    <p class="text-xs font-bold text-indigo-900 mb-8">توقيع المستأجر</p>
+                    <div class="signature-line mx-auto"></div>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-indigo-900 mb-8"> وتوقيع المؤجر</p>
+                    <div class="signature-line mx-auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let customers = JSON.parse(localStorage.getItem('dar_farida_v5')) || [];
+        let currentIdx = -1;
+
+        function toggleStatusSections() {
+            const status = document.getElementById('item_status').value;
+            const extraFields = document.getElementById('extra_inspection_fields');
+            const damageOptions = document.getElementById('damage_options');
+            
+            if(status === 'damaged') {
+                extraFields.classList.remove('hidden-section');
+                damageOptions.classList.remove('hidden-section');
+            } else if(status === 'lost') {
+                extraFields.classList.remove('hidden-section');
+                damageOptions.classList.add('hidden-section');
+                document.querySelectorAll('input[name="damage_type"]').forEach(cb => cb.checked = false);
+            } else {
+                extraFields.classList.add('hidden-section');
+                document.getElementById('damage_fee').value = '';
+                document.getElementById('inspection_notes').value = '';
+                document.querySelectorAll('input[name="damage_type"]').forEach(cb => cb.checked = false);
+            }
+            updatePreview();
+        }
+
+        function addItemRow(desc = '', count = 1) {
+            const container = document.getElementById('items_container');
+            const rowId = Date.now() + Math.random();
+            const div = document.createElement('div');
+            div.className = "flex gap-2 items-center bg-gray-50 p-2 rounded border border-gray-200 shadow-sm";
+            div.id = `row_${rowId}`;
+            div.innerHTML = `
+                <input type="text" placeholder="وصف القطعة..." value="${desc}" class="item-desc border p-1.5 rounded text-sm flex-grow">
+                <input type="number" value="${count}" class="item-count border p-1.5 rounded text-sm w-16 text-center">
+                <button onclick="removeRow('${rowId}')" class="text-red-500 font-bold px-2 hover:bg-red-50 rounded">×</button>
+            `;
+            container.appendChild(div);
+            div.querySelectorAll('input').forEach(i => i.addEventListener('input', updatePreview));
+            updatePreview();
+        }
+
+        function removeRow(id) {
+            const row = document.getElementById(`row_${id}`);
+            if(row) row.remove();
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const printTypeInput = document.querySelector('input[name="print_type"]:checked');
+            if(!printTypeInput) return;
+            const mode = printTypeInput.value;
+            
+            document.getElementById('view_inv_no').innerText = document.getElementById('inv_no').value || '---';
+            document.getElementById('view_cust_name').innerText = document.getElementById('cust_name').value || '---';
+            document.getElementById('view_cust_phone').innerText = document.getElementById('cust_phone').value || '---';
+            document.getElementById('view_cust_id').innerText = document.getElementById('cust_id').value || '---';
+            document.getElementById('view_date_start').innerText = document.getElementById('date_start').value || '---';
+            document.getElementById('view_date_end').innerText = document.getElementById('date_end').value || '---';
+            document.getElementById('print_date').innerText = new Date().toLocaleDateString('ar-SA');
+            const dep = parseFloat(document.getElementById('deposit_price').value) || 0;
+            document.getElementById('view_deposit').innerText = dep + " ر.س";
+
+            const tbody = document.getElementById('view_items_list');
+            tbody.innerHTML = '';
+            document.querySelectorAll('#items_container > div').forEach((row, index) => {
+                const desc = row.querySelector('.item-desc').value;
+                const count = row.querySelector('.item-count').value;
+                if(desc) tbody.innerHTML += `<tr><td class="border p-2 text-center">${index+1}</td><td class="border p-2">${desc}</td><td class="border p-2 text-center">${count}</td></tr>`;
+            });
+
+            if(mode === 'receive') {
+                document.getElementById('invoice_title').innerText = "عقد استلام قطعة إيجار";
+                document.getElementById('content_receive').classList.remove('hidden');
+                document.getElementById('content_return').classList.add('hidden');
+            } else {
+                document.getElementById('invoice_title').innerText = "فاتورة تسوية إرجاع";
+                document.getElementById('content_receive').classList.add('hidden');
+                document.getElementById('content_return').classList.remove('hidden');
+
+                let lateFee = 0;
+                let lateDays = 0;
+                const endVal = document.getElementById('date_end').value;
+                const actualVal = document.getElementById('actual_return_date').value;
+                
+                if(endVal && actualVal) {
+                    const end = new Date(endVal);
+                    const actual = new Date(actualVal);
+                    const rate = parseFloat(document.getElementById('daily_rate').value) || 0;
+                    if(actual > end) {
+                        lateDays = Math.ceil((actual - end) / (1000 * 60 * 60 * 24));
+                        lateFee = lateDays * rate;
+                    }
+                }
+
+                const dmgFee = parseFloat(document.getElementById('damage_fee').value) || 0;
+                const selectedDmg = Array.from(document.querySelectorAll('input[name="damage_type"]:checked')).map(cb => cb.value);
+                const status = document.getElementById('item_status').value;
+                const notes = document.getElementById('inspection_notes').value;
+
+                document.getElementById('ret_deposit').innerText = dep + " ر.س";
+                document.getElementById('ret_days').innerText = lateDays;
+                document.getElementById('ret_late').innerText = lateFee + " ر.س";
+                
+                let statusText = 'سليم';
+                if(status === 'lost') statusText = 'مفقود';
+                else if(status === 'damaged') statusText = (selectedDmg.join('، ') || 'تلف عام');
+                
+                document.getElementById('ret_dmg_list').innerText = statusText;
+                document.getElementById('ret_damage').innerText = dmgFee + " ر.س";
+                document.getElementById('view_inspection_notes').innerText = notes || 'لا توجد ملاحظات';
+                
+                const final = dep - (lateFee + dmgFee);
+                document.getElementById('ret_final').innerText = (final > 0 ? final : 0) + " ر.س";
+            }
+        }
+
+        function saveCurrentCustomer() {
+            if (!document.getElementById('terms_approval').checked) {
+                alert("يرجى قراءة الشروط والموافقة عليها أولاً.");
+                return;
+            }
+
+            const items = [];
+            document.querySelectorAll('#items_container > div').forEach(row => {
+                const desc = row.querySelector('.item-desc').value;
+                const count = row.querySelector('.item-count').value;
+                if(desc) items.push({ desc, count });
+            });
+
+            if(items.length === 0) {
+                alert("يرجى إضافة منتج واحد على الأقل.");
+                return;
+            }
+
+            const data = {
+                name: document.getElementById('cust_name').value,
+                id: document.getElementById('cust_id').value,
+                phone: document.getElementById('cust_phone').value,
+                inv_no: document.getElementById('inv_no').value,
+                date_start: document.getElementById('date_start').value,
+                date_end: document.getElementById('date_end').value,
+                deposit: document.getElementById('deposit_price').value,
+                daily_rate: document.getElementById('daily_rate').value,
+                items: items,
+                inspection_notes: document.getElementById('inspection_notes').value
+            };
+
+            if(!data.name || !data.inv_no) {
+                alert("يرجى إكمال البيانات الأساسية (الاسم ورقم الفاتورة).");
+                return;
+            }
+
+            if(currentIdx > -1) customers[currentIdx] = data;
+            else customers.push(data);
+
+            localStorage.setItem('dar_farida_v5', JSON.stringify(customers));
+            renderList();
+            alert("تم حفظ بيانات العميل والعقد بنجاح.");
+            clearAllFields(); 
+        }
+
+        function renderList() {
+            const list = document.getElementById('customers_list');
+            list.innerHTML = '';
+            document.getElementById('cust_count').innerText = customers.length;
+            customers.slice().reverse().forEach((c, i) => {
+                const actualIdx = customers.indexOf(c);
+                const div = document.createElement('div');
+                div.className = "customer-item p-2 bg-white border rounded shadow-sm cursor-pointer hover:bg-indigo-50 text-xs mb-2";
+                div.onclick = () => loadCustomer(actualIdx);
+                div.innerHTML = `<b>${c.name}</b><br><span class="text-gray-500">فاتورة: ${c.inv_no}</span>`;
+                list.appendChild(div);
+            });
+        }
+
+        function loadCustomer(i) {
+            currentIdx = i;
+            const c = customers[i];
+            document.getElementById('cust_name').value = c.name;
+            document.getElementById('cust_id').value = c.id;
+            document.getElementById('cust_phone').value = c.phone;
+            document.getElementById('inv_no').value = c.inv_no;
+            document.getElementById('date_start').value = c.date_start;
+            document.getElementById('date_end').value = c.date_end;
+            document.getElementById('deposit_price').value = c.deposit;
+            document.getElementById('daily_rate').value = c.daily_rate || '';
+            document.getElementById('inspection_notes').value = c.inspection_notes || '';
+            document.getElementById('items_container').innerHTML = '';
+            c.items.forEach(it => addItemRow(it.desc, it.count));
+            document.getElementById('terms_approval').checked = true;
+            updatePreview();
+        }
+
+        function clearAllFields() {
+            currentIdx = -1;
+            document.querySelectorAll('input:not([type="radio"])').forEach(i => {
+                if(i.type === 'checkbox') i.checked = false;
+                else i.value = '';
+            });
+            document.getElementById('item_status').value = 'safe';
+            document.getElementById('inspection_notes').value = '';
+            toggleStatusSections();
+            document.getElementById('items_container').innerHTML = '';
+            addItemRow();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date_start').value = today;
+            updatePreview();
+        }
+
+        window.onload = () => {
+            renderList();
+            addItemRow();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date_start').value = today;
+            updatePreview();
+        }
+    </script>
+</body>
+</html>
