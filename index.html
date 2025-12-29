@@ -3,51 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دار فريدة للأزياء التراثية </title>
+    <title>دار فريدة كوكب التراث</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --heritage-beige: #F5F5DC;
+            --heritage-brown: #5C3A21;
+            --heritage-gold: #C9A24D;
+            --heritage-burgundy: #7B2D26;
+            --heritage-olive: #6B8E23;
+        }
+
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: #f0f2f5;
+            background-color: var(--heritage-beige);
+            color: var(--heritage-brown);
         }
+
         .invoice-box {
             background: white;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 20px rgba(92, 58, 33, 0.1);
             border-radius: 12px;
+            border: 1px solid #e5e5d1;
         }
+
         .section-card {
             background: white;
             padding: 1.5rem;
             border-radius: 0.75rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(92, 58, 33, 0.05);
             margin-bottom: 1.5rem;
+            border: 1px solid #eeebe0;
         }
+
+        .header-strip {
+            background-color: var(--heritage-brown);
+            color: white;
+        }
+
+        .btn-gold {
+            background-color: var(--heritage-gold);
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .btn-gold:hover {
+            background-color: #b08d42;
+            transform: translateY(-1px);
+        }
+
+        .btn-burgundy {
+            background-color: var(--heritage-burgundy);
+            color: white;
+        }
+
+        .btn-burgundy:hover {
+            background-color: #63241e;
+        }
+
+        .customer-item {
+            border-right: 4px solid var(--heritage-olive);
+            transition: all 0.2s;
+        }
+
+        .customer-item:hover {
+            background-color: #fcfcf4;
+        }
+
         @media print {
             .no-print { display: none !important; }
-            body { background: white; padding: 0; }
+            body { background: white; padding: 0; color: black; }
             .invoice-box { box-shadow: none; border: none; width: 100%; margin: 0; padding: 0;}
+            .header-strip { background-color: white !important; color: black !important; border-bottom: 2px solid #5C3A21; }
         }
+
         .signature-line {
-            border-top: 1px solid #333;
+            border-top: 1px solid var(--heritage-brown);
             width: 150px;
             margin-top: 40px;
         }
+
         .hidden-section {
             display: none;
         }
-        .customer-item {
-            border-right: 4px solid #4f46e5;
-            transition: all 0.2s;
-        }
-        .customer-item:hover {
-            background-color: #f5f7ff;
-        }
+
         .terms-text {
             line-height: 1.6;
             font-size: 0.75rem;
+        }
+
+        input, select {
+            border: 1px solid #d1cebd !important;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--heritage-gold) !important;
+            ring: 1px solid var(--heritage-gold);
         }
     </style>
 </head>
@@ -57,16 +112,16 @@
         
         <!-- Dashboard / Editor Mode -->
         <div class="no-print mb-8">
-            <h1 class="text-3xl font-bold text-indigo-900 mb-6 text-center"> دار فريدة للأزياء التراثية</h1>
+            <h1 class="text-3xl font-bold mb-6 text-center" style="color: var(--heritage-brown);">دار فريدة كوكب التراث</h1>
             
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 
                 <!-- السجلات -->
                 <div class="lg:col-span-1">
-                    <div class="section-card bg-white border-t-4 border-indigo-600">
-                        <h2 class="text-lg font-bold text-indigo-800 mb-4 flex items-center justify-between">
-                             <span>العملاء </span>
-                             <span id="cust_count" class="text-xs bg-indigo-100 px-2 py-1 rounded text-indigo-600">0</span>
+                    <div class="section-card" style="border-top: 4px solid var(--heritage-olive);">
+                        <h2 class="text-lg font-bold mb-4 flex items-center justify-between" style="color: var(--heritage-brown);">
+                             <span>العملاء</span>
+                             <span id="cust_count" class="text-xs px-2 py-1 rounded" style="background-color: #f1f1e1; color: var(--heritage-olive);">0</span>
                         </h2>
                         <div id="customers_list" class="space-y-3 max-h-[700px] overflow-y-auto pr-1"></div>
                         <div class="mt-4 pt-4 border-t">
@@ -77,8 +132,8 @@
 
                 <!-- إدخال البيانات -->
                 <div class="lg:col-span-2">
-                    <div class="section-card border-r-4 border-indigo-500">
-                        <h2 class="text-lg font-bold text-indigo-800 border-b pb-2 mb-4">بيانات العميل والعقد</h2>
+                    <div class="section-card" style="border-right: 4px solid var(--heritage-gold);">
+                        <h2 class="text-lg font-bold border-b pb-2 mb-4" style="color: var(--heritage-brown);">بيانات العميل والعقد</h2>
                         
                         <div class="space-y-4 mb-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -99,7 +154,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div>
                                     <label class="text-[10px] text-gray-500 block">تاريخ الاستلام</label>
-                                    <input type="date" id="date_end" class="border p-2 rounded w-full" onchange="updatePreview()">
+                                    <input type="date" id="date_start" class="border p-2 rounded w-full" onchange="updatePreview()">
                                 </div>
                                 <div>
                                     <label class="text-[10px] text-gray-500 block">تاريخ الإرجاع المقرر</label>
@@ -111,15 +166,15 @@
                         <!-- إضافة منتجات -->
                         <div class="mb-4 pt-4 border-t">
                             <div class="flex justify-between items-center mb-2">
-                                <h3 class="text-sm font-bold text-indigo-900">المنتجات المستأجرة:</h3>
-                                <button onclick="addItemRow()" class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-200 font-bold transition">+ إضافة منتج جديد</button>
+                                <h3 class="text-sm font-bold" style="color: var(--heritage-brown);">المنتجات المستأجرة:</h3>
+                                <button onclick="addItemRow()" class="text-xs px-3 py-1.5 rounded-lg font-bold transition" style="background-color: #fdf6e9; color: var(--heritage-gold);">+ إضافة منتج جديد</button>
                             </div>
                             <div id="items_container" class="space-y-2"></div>
                         </div>
                         
                         <!-- الشروط في المحرر -->
-                        <div class="bg-indigo-50 p-4 rounded mb-4 border border-indigo-100">
-                            <div class="terms-text text-indigo-900 mb-3 text-right">
+                        <div class="p-4 rounded mb-4 border" style="background-color: #fdfaf0; border-color: #eeebe0;">
+                            <div class="terms-text mb-3 text-right" style="color: var(--heritage-brown);">
                                 <p class="font-bold mb-1">شروط عقد الإيجار:</p>
                                 <ol class="list-decimal list-inside space-y-1">
                                     <li>يقر المستأجر باستلام القطعة بحالة سليمة وخالية من العيوب.</li>
@@ -132,18 +187,18 @@
                                     <li>هذه الفاتورة تعتبر عقداً ملزماً للطرفين.</li>
                                 </ol>
                             </div>
-                            <label class="flex items-start gap-2 cursor-pointer bg-white p-2 rounded border border-indigo-200">
+                            <label class="flex items-start gap-2 cursor-pointer bg-white p-2 rounded border" style="border-color: #eeebe0;">
                                 <input type="checkbox" id="terms_approval" class="w-5 h-5 mt-0.5">
-                                <span class="text-xs text-indigo-900 font-bold italic">أوافق على جميع بنود العقد أعلاه.</span>
+                                <span class="text-xs font-bold italic" style="color: var(--heritage-brown);">أوافق على جميع بنود العقد أعلاه.</span>
                             </label>
                         </div>
 
-                        <button onclick="saveCurrentCustomer()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-lg mb-6">حفظ واعتماد السجل</button>
+                        <button onclick="saveCurrentCustomer()" class="w-full btn-burgundy py-3 rounded-lg font-bold transition shadow-lg mb-6">حفظ واعتماد السجل</button>
                     </div>
 
                     <!-- قسم تسوية الإرجاع -->
-                    <div class="section-card border-r-4 border-orange-500 bg-orange-50/30">
-                        <h2 class="text-lg font-bold text-orange-700 border-b pb-2 mb-4">فحص الإرجاع والتسوية</h2>
+                    <div class="section-card" style="border-right: 4px solid var(--heritage-olive); background-color: #f9faf4;">
+                        <h2 class="text-lg font-bold border-b pb-2 mb-4" style="color: var(--heritage-olive);">فحص الإرجاع والتسوية</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="text-xs text-gray-600 block mb-1">تاريخ الإرجاع </label>
@@ -178,9 +233,9 @@
                 <!-- التحكم في الطباعة -->
                 <div class="lg:col-span-1">
                     <div class="section-card sticky top-4 bg-white border border-gray-200">
-                        <h2 class="text-lg font-bold text-indigo-900 mb-4">خيارات الطباعة</h2>
+                        <h2 class="text-lg font-bold mb-4" style="color: var(--heritage-brown);">خيارات الطباعة</h2>
                         <div class="space-y-3 mb-6">
-                            <label class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-indigo-50 transition">
+                            <label class="flex items-center gap-3 p-3 border rounded cursor-pointer hover:bg-orange-50 transition">
                                 <input type="radio" name="print_type" value="receive" checked onchange="updatePreview()">
                                 <span class="font-bold text-sm">فاتورة استلام</span>
                             </label>
@@ -189,7 +244,7 @@
                                 <span class="font-bold text-sm text-orange-700">فاتورة إرجاع (تسوية)</span>
                             </label>
                         </div>
-                        <button onclick="window.print()" class="w-full bg-indigo-900 text-white font-bold py-3 rounded-lg shadow hover:bg-black transition">طباعة المستند</button>
+                        <button onclick="window.print()" class="w-full btn-gold font-bold py-3 rounded-lg shadow transition">طباعة المستند</button>
                     </div>
                 </div>
             </div>
@@ -197,9 +252,9 @@
 
         <!-- المنطقة القابلة للطباعة -->
         <div id="invoice" class="invoice-box p-12 text-gray-800">
-            <div class="flex justify-between items-start border-b-4 border-indigo-900 pb-6 mb-8">
+            <div class="flex justify-between items-start pb-6 mb-8" style="border-bottom: 4px solid var(--heritage-brown);">
                 <div>
-                    <h2 class="text-3xl font-black text-indigo-900 mb-1">دار فريدة للأزياء</h2>
+                    <h2 class="text-3xl font-black mb-1" style="color: var(--heritage-brown);">دار فريدة للأزياء</h2>
                     <p id="invoice_title" class="text-lg font-bold text-gray-600">عقد استلام قطعة إيجار</p>
                 </div>
                 <div class="text-left font-bold text-sm">
@@ -209,25 +264,25 @@
             </div>
 
             <div class="grid grid-cols-2 gap-8 mb-8 text-sm">
-                <div class="bg-gray-50 p-4 rounded-lg border">
-                    <h3 class="font-black text-indigo-800 border-b mb-2">بيانات المستأجر</h3>
+                <div class="p-4 rounded-lg border" style="background-color: #fafaf7;">
+                    <h3 class="font-black border-b mb-2" style="color: var(--heritage-brown);">بيانات المستأجر</h3>
                     <p>الاسم: <span id="view_cust_name" class="font-bold">---</span></p>
                     <p>الجوال: <span id="view_cust_phone" class="font-bold">---</span></p>
                     <p>الهوية: <span id="view_cust_id">---</span></p>
                 </div>
-                <div class="bg-gray-50 p-4 rounded-lg border">
-                    <h3 class="font-black text-indigo-800 border-b mb-2">مواعيد العقد</h3>
+                <div class="p-4 rounded-lg border" style="background-color: #fafaf7;">
+                    <h3 class="font-black border-b mb-2" style="color: var(--heritage-brown);">مواعيد العقد</h3>
                     <p>تاريخ الاستلام: <span id="view_date_start">---</span></p>
-                    <p>الإرجاع المتوقع: <span id="view_date_end" class="font-bold text-red-600">---</span></p>
+                    <p>الإرجاع المتوقع: <span id="view_date_end" class="font-bold" style="color: var(--heritage-burgundy);">---</span></p>
                 </div>
             </div>
 
             <!-- جدول المنتجات -->
             <div class="mb-8">
-                <h3 class="font-bold text-indigo-900 mb-2 underline">قائمة القطع المستلمة:</h3>
+                <h3 class="font-bold mb-2 underline" style="color: var(--heritage-brown);">قائمة القطع المستلمة:</h3>
                 <table class="w-full text-right border-collapse text-xs">
                     <thead>
-                        <tr class="bg-gray-100">
+                        <tr style="background-color: #f1f1e1;">
                             <th class="border p-2 w-10">#</th>
                             <th class="border p-2">المنتج / الوصف</th>
                             <th class="border p-2 w-20 text-center">العدد</th>
@@ -237,16 +292,16 @@
                 </table>
             </div>
 
-            <!-- تفاصيل الاستلام (تظهر بها الشروط) -->
+            <!-- تفاصيل الاستلام -->
             <div id="content_receive">
-                <div class="flex justify-between items-center p-4 bg-indigo-900 text-white rounded mb-6">
+                <div class="flex justify-between items-center p-4 text-white rounded mb-6" style="background-color: var(--heritage-brown);">
                     <span class="text-lg font-bold">إجمالي مبلغ التأمين المودع:</span>
                     <span id="view_deposit" class="text-2xl font-black">0 ر.س</span>
                 </div>
                 
                 <!-- شروط العقد المطبوعة -->
-                <div class="bg-gray-50 p-4 rounded border border-gray-200 mb-8">
-                    <h4 class="text-xs font-bold text-indigo-900 mb-2 border-b pb-1">شروط عقد الإيجار:</h4>
+                <div class="p-4 rounded border mb-8" style="background-color: #fafaf7; border-color: #eeebe0;">
+                    <h4 class="text-xs font-bold mb-2 border-b pb-1" style="color: var(--heritage-brown);">شروط عقد الإيجار:</h4>
                     <ul class="text-[10px] leading-relaxed text-gray-700 space-y-1">
                         <li>1. يقر المستأجر باستلام القطعة بحالة سليمة وخالية من العيوب.</li>
                         <li>2. في حال التلف أو التمزق أو الاتساخ غير القابل للتنظيف أو فقدان أي جزء، يحق للمحل خصم التأمين أو المطالبة بالقيمة الكاملة.</li>
@@ -262,10 +317,10 @@
 
             <!-- تفاصيل الإرجاع -->
             <div id="content_return" class="hidden text-sm">
-                 <h3 class="font-bold text-orange-700 mb-2 border-b pb-1">تقرير الإرجاع والتسوية:</h3>
+                 <h3 class="font-bold mb-2 border-b pb-1" style="color: var(--heritage-burgundy);">تقرير الإرجاع والتسوية:</h3>
                  <table class="w-full text-right border-collapse mb-4">
                     <thead>
-                        <tr class="bg-orange-700 text-white">
+                        <tr class="text-white" style="background-color: var(--heritage-burgundy);">
                             <th class="p-2 border">بند التسوية</th>
                             <th class="p-2 border text-left">المبلغ</th>
                         </tr>
@@ -274,21 +329,21 @@
                         <tr><td class="p-2 border">مبلغ التأمين المودع</td><td id="ret_deposit" class="p-2 border text-left">0</td></tr>
                         <tr><td class="p-2 border">غرامة تأخير (أيام التأخير: <span id="ret_days">0</span>)</td><td id="ret_late" class="p-2 border text-left text-red-600">0</td></tr>
                         <tr><td class="p-2 border">غرامة تلفيات (<span id="ret_dmg_list">سليم</span>)</td><td id="ret_damage" class="p-2 border text-left text-red-600">0</td></tr>
-                        <tr class="font-bold bg-green-50"><td class="p-2 border">المبلغ الصافي المسترد للعميل</td><td id="ret_final" class="p-2 border text-left text-green-700">0</td></tr>
+                        <tr class="font-bold" style="background-color: #f4f8f4;"><td class="p-2 border">المبلغ الصافي المسترد للعميل</td><td id="ret_final" class="p-2 border text-left" style="color: var(--heritage-olive);">0</td></tr>
                     </tbody>
                  </table>
-                 <div class="p-3 bg-gray-50 border rounded text-xs mb-8">
+                 <div class="p-3 border rounded text-xs mb-8" style="background-color: #fafaf7;">
                      <b>ملاحظات الفحص:</b> <span id="view_inspection_notes">لا توجد ملاحظات</span>
                  </div>
             </div>
 
             <div class="grid grid-cols-2 gap-24 text-center mt-12">
                 <div>
-                    <p class="text-xs font-bold text-indigo-900 mb-8">توقيع المستأجر</p>
+                    <p class="text-xs font-bold mb-8" style="color: var(--heritage-brown);">توقيع المستأجر</p>
                     <div class="signature-line mx-auto"></div>
                 </div>
                 <div>
-                    <p class="text-xs font-bold text-indigo-900 mb-8"> وتوقيع المؤجر</p>
+                    <p class="text-xs font-bold mb-8" style="color: var(--heritage-brown);">توقيع المؤجر</p>
                     <div class="signature-line mx-auto"></div>
                 </div>
             </div>
@@ -324,7 +379,8 @@
             const container = document.getElementById('items_container');
             const rowId = Date.now() + Math.random();
             const div = document.createElement('div');
-            div.className = "flex gap-2 items-center bg-gray-50 p-2 rounded border border-gray-200 shadow-sm";
+            div.className = "flex gap-2 items-center p-2 rounded border shadow-sm";
+            div.style.backgroundColor = "#fafaf7";
             div.id = `row_${rowId}`;
             div.innerHTML = `
                 <input type="text" placeholder="وصف القطعة..." value="${desc}" class="item-desc border p-1.5 rounded text-sm flex-grow">
@@ -463,9 +519,9 @@
             customers.slice().reverse().forEach((c, i) => {
                 const actualIdx = customers.indexOf(c);
                 const div = document.createElement('div');
-                div.className = "customer-item p-2 bg-white border rounded shadow-sm cursor-pointer hover:bg-indigo-50 text-xs mb-2";
+                div.className = "customer-item p-2 bg-white border rounded shadow-sm cursor-pointer text-xs mb-2";
                 div.onclick = () => loadCustomer(actualIdx);
-                div.innerHTML = `<b>${c.name}</b><br><span class="text-gray-500">فاتورة: ${c.inv_no}</span>`;
+                div.innerHTML = `<b style="color: var(--heritage-brown);">${c.name}</b><br><span class="text-gray-500">فاتورة: ${c.inv_no}</span>`;
                 list.appendChild(div);
             });
         }
