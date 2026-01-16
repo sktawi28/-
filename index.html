@@ -8,6 +8,9 @@
     <!-- تحميل Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- تحميل مكتبة Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <!-- تكوين ألوان Tailwind المخصصة -->
     <script>
         tailwind.config = {
@@ -47,46 +50,33 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+        /* Loader */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #5C3A21;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         /* تنسيقات الطباعة */
         @media print {
             @page { size: A4; margin: 10mm; }
             body { background-color: white !important; }
-            
-            /* إخفاء كل محتويات الصفحة */
             body * { visibility: hidden; }
-            
-            /* إخفاء العناصر الأساسية للتطبيق لتجنب تداخل المساحات */
             header, #app { display: none !important; }
-
-            /* إظهار منطقة الطباعة فقط */
             #printable-area, #printable-area * { 
                 visibility: visible !important; 
-                display: block !important; /* تجاوز display: none */
+                display: block !important; 
             }
-            
             #printable-area { 
-                position: absolute; 
-                left: 0; 
-                top: 0; 
-                width: 100%; 
-                height: auto;
-                background: white; 
-                padding: 0; 
-                color: black; 
-                font-size: 12px; 
-                z-index: 9999;
+                position: absolute; left: 0; top: 0; width: 100%; height: auto;
+                background: white; padding: 0; color: black; font-size: 12px; z-index: 9999;
             }
-            
-            /* تنسيقات خاصة للجدول داخل الطباعة لضمان العرض */
             #printable-area table { display: table !important; width: 100% !important; }
-            #printable-area thead { display: table-header-group !important; }
-            #printable-area tbody { display: table-row-group !important; }
-            #printable-area tr { display: table-row !important; }
-            #printable-area td, #printable-area th { display: table-cell !important; }
-            
-            /* تنسيقات فليكس داخل الطباعة */
-            #printable-area .flex-print { display: flex !important; justify-content: space-between; }
-
             .no-print { display: none !important; }
         }
     </style>
@@ -97,10 +87,9 @@
     <header class="shadow-lg mb-6 sticky top-0 z-50 bg-brand-primary print:hidden">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <!-- الشعار -->
-                <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-brand-gold bg-brand-bg flex items-center justify-center">
-                    <img src="icon.jpeg" alt="شعار" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-                    <span class="font-heading text-brand-primary text-xl hidden">ف</span>
+                <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-brand-gold bg-brand-bg flex items-center justify-center relative">
+                    <i data-lucide="palmtree" class="text-brand-primary w-8 h-8 absolute" id="fallback-icon"></i>
+                    <img src="icon.jpeg" alt="شعار" class="w-full h-full object-cover relative z-10" onerror="this.style.display='none';">
                 </div>
                 <h1 class="text-xl md:text-2xl font-bold text-white">
                     دار فريدة <span class="text-brand-gold text-sm font-light mr-1">كوكب التراث</span>
@@ -113,22 +102,259 @@
         </div>
     </header>
 
+    <!-- مؤشر التحميل وقائمة التنبيهات -->
+    <div id="status-message" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 hidden"></div>
+
+    <!-- نافذة إعداد قاعدة البيانات -->
+    <div id="setup-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center fade-in">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
+            <div class="bg-brand-primary p-4 flex justify-between items-center">
+                <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                    <i data-lucide="database" class="w-5 h-5 text-brand-gold"></i>
+                    إعداد قاعدة البيانات
+                </h3>
+                <button onclick="document.getElementById('setup-modal').classList.add('hidden')" class="text-white/80 hover:text-white">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200 flex items-start gap-3">
+                    <i data-lucide="alert-triangle" class="w-6 h-6 shrink-0 mt-0.5"></i>
+                    <div>
+                        <p class="font-bold">جدول البيانات غير موجود!</p>
+                        <p class="text-sm">يبدو أنك لم تقم بإنشاء الجدول `contracts` في Supabase بعد.</p>
+                    </div>
+                </div>
+                
+                <p class="text-gray-700 mb-2 font-bold">الخطوات:</p>
+                <ol class="list-decimal list-inside text-sm text-gray-600 mb-4 space-y-1">
+                    <li>اذهب إلى مشروعك في <b>Supabase</b>.</li>
+                    <li>انقر على <b>SQL Editor</b> من القائمة الجانبية.</li>
+                    <li>انسخ الكود أدناه والصقه هناك، ثم اضغط <b>Run</b>.</li>
+                </ol>
+
+                <div class="relative">
+                    <pre class="bg-gray-800 text-green-400 p-4 rounded-lg text-xs md:text-sm overflow-x-auto text-left dir-ltr font-mono shadow-inner" id="sql-code">
+create table contracts (
+  id text primary key,
+  created_at timestamptz default now(),
+  client_name text,
+  client_phone text,
+  start_date date,
+  return_date date,
+  daily_rent numeric,
+  total_rent numeric,
+  total_deposit numeric,
+  rental_days numeric,
+  status text,
+  items jsonb,
+  final_bill jsonb,
+  actual_return_date date
+);
+</pre>
+                    <button onclick="copySqlCode()" class="absolute top-2 right-2 bg-white/20 hover:bg-white/30 text-white p-2 rounded transition-colors" title="نسخ الكود">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button onclick="document.getElementById('setup-modal').classList.add('hidden'); fetchContracts();" class="px-6 py-2 bg-brand-primary text-white rounded-lg hover:opacity-90 font-bold">
+                        تم الإنشاء، أعد المحاولة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- المحتوى الرئيسي -->
-    <main id="app" class="container mx-auto px-4"></main>
+    <main id="app" class="container mx-auto px-4">
+        <div class="text-center pt-20">
+            <div class="loader"></div>
+            <p class="text-brand-primary font-bold mt-4">جاري الاتصال بقاعدة البيانات...</p>
+        </div>
+    </main>
 
     <!-- منطقة الطباعة المخفية -->
     <div id="printable-area" class="hidden"></div>
 
     <script>
+        // ==========================================
+        // إعدادات Supabase
+        // ==========================================
+        
+        // تم التحقق من الرابط وهو صحيح
+        const SUPABASE_URL = 'https://fnxnfsfpjggwcxhhpmxd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZueG5mc2Zwamdnd2N4aGhwbXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1NTk3OTYsImV4cCI6MjA4NDEzNTc5Nn0.M_agMD3SdpIemvvj4cU1T-3XZxb3a-8uK9wgIFoXUa4';
+        
+        let supabaseClient;
+        
+        try {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (err) {
+            console.error('فشل تهيئة Supabase', err);
+        }
+
         // --- إدارة الحالة (State) ---
-        let contracts = JSON.parse(localStorage.getItem('dar_farida_contracts')) || [];
+        let contracts = [];
         let currentView = 'dashboard';
         let selectedContractId = null;
         let editingContractId = null;
+        let isLoading = false;
 
-        // حفظ البيانات
-        function saveContracts() {
-            localStorage.setItem('dar_farida_contracts', JSON.stringify(contracts));
+        // --- دوال قاعدة البيانات (Supabase Functions) ---
+
+        // جلب العقود
+        async function fetchContracts() {
+            if (!supabaseClient) return;
+            isLoading = true;
+            renderLoading();
+            
+            const { data, error } = await supabaseClient
+                .from('contracts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching contracts:', error);
+                
+                // التحقق من خطأ عدم وجود الجدول PGRST205
+                if (error.code === 'PGRST205' || (error.message && error.message.includes('Could not find the table'))) {
+                    showSetupModal();
+                } else {
+                    showToast('حدث خطأ أثناء جلب البيانات: ' + error.message, 'error');
+                }
+                
+                contracts = [];
+                renderDashboard();
+            } else {
+                contracts = data.map(mapDbToApp);
+                renderDashboard();
+            }
+            isLoading = false;
+        }
+
+        // إنشاء عقد جديد
+        async function dbCreateContract(contractData) {
+            if (!supabaseClient) return;
+            const dbRow = mapAppToDb(contractData);
+            
+            const { data, error } = await supabaseClient
+                .from('contracts')
+                .insert([dbRow])
+                .select();
+
+            if (error) {
+                console.error('Error creating contract:', error);
+                
+                if (error.code === 'PGRST205' || (error.message && error.message.includes('Could not find the table'))) {
+                    showSetupModal();
+                    throw new Error('الجدول غير موجود');
+                }
+                
+                showToast('فشل حفظ العقد', 'error');
+                throw error;
+            }
+            showToast('تم حفظ العقد بنجاح', 'success');
+            return data[0];
+        }
+
+        // تحديث عقد
+        async function dbUpdateContract(id, updates) {
+            if (!supabaseClient) return;
+            const dbUpdates = mapAppToDb(updates);
+            
+            const { data, error } = await supabaseClient
+                .from('contracts')
+                .update(dbUpdates)
+                .eq('id', id)
+                .select();
+
+            if (error) {
+                console.error('Error updating contract:', error);
+                showToast('فشل تحديث العقد', 'error');
+                throw error;
+            }
+            showToast('تم تحديث العقد بنجاح', 'success');
+            return data[0];
+        }
+
+        // --- دوال المساعدة للواجهة ---
+        function showSetupModal() {
+            const modal = document.getElementById('setup-modal');
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function copySqlCode() {
+            const code = document.getElementById('sql-code').innerText;
+            
+            // استخدام execCommand بدلاً من clipboard API لضمان التوافقية
+            const textArea = document.createElement("textarea");
+            textArea.value = code;
+            
+            // جعل العنصر غير مرئي
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            textArea.style.top = "0";
+            document.body.appendChild(textArea);
+            
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast('تم نسخ كود SQL', 'success');
+                } else {
+                    console.error('Fallback: Copying text command was unsuccessful');
+                    showToast('فشل النسخ، يرجى النسخ يدوياً', 'error');
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showToast('فشل النسخ، يرجى النسخ يدوياً', 'error');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // --- دوال التحويل (Mapping) ---
+        function mapAppToDb(appData) {
+            const safeData = {};
+            if (appData.id) safeData.id = appData.id;
+            if (appData.clientName) safeData.client_name = appData.clientName;
+            if (appData.clientPhone) safeData.client_phone = appData.clientPhone;
+            if (appData.startDate) safeData.start_date = appData.startDate;
+            if (appData.returnDate) safeData.return_date = appData.returnDate;
+            if (appData.dailyRent !== undefined) safeData.daily_rent = appData.dailyRent;
+            if (appData.totalRent !== undefined) safeData.total_rent = appData.totalRent;
+            if (appData.totalDeposit !== undefined) safeData.total_deposit = appData.totalDeposit;
+            if (appData.rentalDays !== undefined) safeData.rental_days = appData.rentalDays;
+            if (appData.status) safeData.status = appData.status;
+            if (appData.items) safeData.items = appData.items;
+            if (appData.finalBill) safeData.final_bill = appData.finalBill;
+            if (appData.actualReturnDate) safeData.actual_return_date = appData.actualReturnDate;
+            if (appData.createdAt) safeData.created_at = appData.createdAt;
+
+            return safeData;
+        }
+
+        function mapDbToApp(dbRow) {
+            return {
+                id: dbRow.id,
+                clientName: dbRow.client_name,
+                clientPhone: dbRow.client_phone,
+                startDate: dbRow.start_date,
+                returnDate: dbRow.return_date,
+                dailyRent: dbRow.daily_rent,
+                totalRent: dbRow.total_rent,
+                totalDeposit: dbRow.total_deposit,
+                rentalDays: dbRow.rental_days,
+                status: dbRow.status,
+                items: dbRow.items,
+                finalBill: dbRow.final_bill,
+                actualReturnDate: dbRow.actual_return_date,
+                createdAt: dbRow.created_at
+            };
         }
 
         // --- أدوات مساعدة ---
@@ -137,8 +363,7 @@
                 minimumFractionDigits: 0, 
                 maximumFractionDigits: 0 
             }).format(amount);
-            // استخدام شعار الريال السعودي كصورة
-            return `<span style="white-space: nowrap;">${val} <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Saudi_Riyal_Symbol.svg" style="height: 14px; display: inline-block; vertical-align: middle; margin-right: 2px;" alt="ر.س"></span>`;
+            return `<span style="white-space: nowrap;">${val} <span style="font-size: 0.8em; margin-right: 2px;">ر.س</span></span>`;
         };
         
         const calculateDays = (start, end) => {
@@ -157,8 +382,27 @@
             return `<span class="px-3 py-1 rounded-full text-xs font-bold text-white ${s.color}">${s.text}</span>`;
         };
 
-        // --- دوال العرض (Render Functions) ---
+        function showToast(message, type = 'success') {
+            const el = document.getElementById('status-message');
+            const colorClass = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+            el.className = `fixed top-24 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg text-white font-bold shadow-lg fade-in ${colorClass}`;
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 3000);
+        }
 
+        function renderLoading() {
+            document.getElementById('app').innerHTML = `
+                <div class="flex flex-col items-center justify-center h-64 fade-in">
+                    <div class="loader"></div>
+                    <p class="text-gray-500 mt-4">جاري التحميل...</p>
+                </div>
+            `;
+        }
+
+        // --- دوال العرض (Render Functions) ---
         function renderDashboard() {
             currentView = 'dashboard';
             editingContractId = null;
@@ -195,6 +439,11 @@
                             <i data-lucide="search" class="w-8 h-8 text-brand-primary"></i>
                         </div>
                         <span class="text-lg font-bold text-brand-primary">سجل العقود</span>
+                    </button>
+                    
+                    <button onclick="fetchContracts()" class="p-6 rounded-xl shadow-md bg-gray-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-3 hover:bg-gray-200 transition-colors group cursor-pointer">
+                        <i data-lucide="refresh-cw" class="w-6 h-6 text-gray-500"></i>
+                        <span class="text-sm font-bold text-gray-500">تحديث البيانات</span>
                     </button>
                 </div>
             `;
@@ -313,20 +562,6 @@
                         </section>
 
                         <section class="pt-4 border-t">
-                            <div class="bg-gray-50 p-4 rounded-lg mb-4 border border-brand-primary/20">
-                                <h4 class="font-bold text-brand-primary mb-2 text-sm">شروط وأحكام الإيجار:</h4>
-                                <ol class="list-decimal list-inside text-xs md:text-sm text-gray-700 space-y-1">
-                                    <li>يقر المستأجر باستلام القطعة بحالة سليمة وخالية من العيوب.</li>
-                                    <li>في حال التلف، التمزق، الاتساخ غير القابل للتنظيف، أو فقدان أي جزء (إكسسوار / حزام / غطاء رأس): يحق للمحل خصم كامل مبلغ التأمين أو مطالبة المستأجر بقيمة القطعة كاملة حسب تقدير المحل.</li>
-                                    <li>يمنع غسل أو تعديل أو قص القطعة أو استخدام مواد تجميلية تسبب بقع (مكياج – عطور مباشرة).</li>
-                                    <li>التأخير في الإرجاع يترتب عليه غرامة يومية تعادل قيمة الإيجار اليومي عن كل يوم تأخير.</li>
-                                    <li>في حال الفقدان الكامل، يلتزم المستأجر بدفع القيمة السوقية للقطعة دون اعتراض.</li>
-                                    <li>لا يحق للمستأجر تأجير القطعة لطرف آخر.</li>
-                                    <li>مبلغ التأمين يُسترد بعد فحص القطعة.</li>
-                                    <li>هذه الفاتورة تعتبر عقدًا ملزمًا للطرفين.</li>
-                                </ol>
-                            </div>
-
                             <label class="flex items-center gap-3 cursor-pointer p-4 rounded-lg hover:bg-gray-50">
                                 <input type="checkbox" id="termsCheck" required class="w-5 h-5 text-brand-primary rounded" ${editingContractId ? 'checked' : ''}>
                                 <span class="text-sm md:text-base font-bold text-brand-primary">
@@ -336,7 +571,7 @@
 
                             <div class="flex justify-end gap-4 mt-6">
                                 <button type="button" onclick="${editingContractId ? `renderContractDetails('${editingContractId}')` : 'renderDashboard()'}" class="px-6 py-3 rounded-lg font-bold border hover:bg-gray-50 text-gray-600">إلغاء</button>
-                                <button type="submit" class="px-8 py-3 rounded-lg font-bold text-white bg-brand-primary flex items-center gap-2 shadow-lg hover:scale-105 transition-transform">
+                                <button type="submit" class="px-8 py-3 rounded-lg font-bold text-white bg-brand-primary flex items-center gap-2 shadow-lg hover:scale-105 transition-transform" id="submitBtn">
                                     <i data-lucide="save"></i> ${btnText}
                                 </button>
                             </div>
@@ -384,13 +619,18 @@
             lucide.createIcons();
         }
 
-        function handleContractSubmit(e) {
+        async function handleContractSubmit(e) {
             e.preventDefault();
             const form = e.target;
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<div class="loader w-5 h-5 border-2 ml-2"></div> جاري الحفظ...`;
             
             const itemRows = document.querySelectorAll('.item-row');
             if (itemRows.length === 0) {
                 alert('يرجى إضافة قطعة واحدة على الأقل');
+                btn.disabled = false;
+                btn.textContent = 'حفظ';
                 return;
             }
 
@@ -423,27 +663,29 @@
                 finalBill: editingContractId ? (contracts.find(c => c.id === editingContractId).finalBill) : null
             };
 
-            if (editingContractId) {
-                const index = contracts.findIndex(c => c.id === editingContractId);
-                if (index !== -1) {
-                    contracts[index] = { ...contracts[index], ...contractData };
+            try {
+                if (editingContractId) {
+                    await dbUpdateContract(editingContractId, contractData);
+                    // تحديث الحالة المحلية
+                    const index = contracts.findIndex(c => c.id === editingContractId);
+                    if (index !== -1) {
+                         contracts[index] = { ...contracts[index], ...contractData };
+                    }
+                    selectedContractId = editingContractId;
+                    editingContractId = null;
+                    renderContractDetails(selectedContractId);
+                } else {
+                    contractData.id = Date.now().toString(); // مؤقت، يمكن أن يأتي من DB
+                    const newRecord = await dbCreateContract(contractData);
+                    
+                    if (newRecord) {
+                         contracts.unshift(mapDbToApp(newRecord));
+                         renderContractList();
+                    }
                 }
-                selectedContractId = editingContractId;
-                editingContractId = null;
-            } else {
-                const newContract = {
-                    id: Date.now().toString(),
-                    ...contractData
-                };
-                contracts.unshift(newContract);
-            }
-
-            saveContracts();
-            
-            if (selectedContractId) {
-                renderContractDetails(selectedContractId);
-            } else {
-                renderContractList();
+            } catch (error) {
+                btn.disabled = false;
+                btn.textContent = 'إعادة المحاولة';
             }
         }
 
@@ -451,7 +693,7 @@
             currentView = 'list';
             editingContractId = null;
             const filtered = contracts.filter(c => 
-                c.clientName.includes(filter) || c.id.includes(filter)
+                c.clientName.includes(filter) || c.id.toString().includes(filter)
             ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
             const html = `
@@ -482,7 +724,7 @@
                                 ${filtered.length === 0 ? '<tr><td colspan="6" class="p-8 text-center text-gray-500">لا توجد نتائج</td></tr>' : 
                                   filtered.map(c => `
                                     <tr class="hover:bg-amber-50 transition-colors">
-                                        <td class="p-4 font-mono text-sm">#${c.id.slice(-6)}</td>
+                                        <td class="p-4 font-mono text-sm">#${c.id.toString().slice(-6)}</td>
                                         <td class="p-4 font-bold text-brand-primary">${c.clientName}</td>
                                         <td class="p-4">${c.returnDate}</td>
                                         <td class="p-4">${getStatusHTML(c.status)}</td>
@@ -537,7 +779,7 @@
                             <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-brand-gold">
                                 <div class="flex justify-between items-start mb-6">
                                     <div>
-                                        <h2 class="text-2xl font-bold mb-1 text-brand-primary">عقد #${contract.id.slice(-6)}</h2>
+                                        <h2 class="text-2xl font-bold mb-1 text-brand-primary">عقد #${contract.id.toString().slice(-6)}</h2>
                                         <p class="text-gray-500 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> ${contract.clientName}</p>
                                         <p class="text-gray-500 flex items-center gap-2"><i data-lucide="phone" class="w-4 h-4"></i> ${contract.clientPhone}</p>
                                     </div>
@@ -744,7 +986,7 @@
             }
         }
 
-        function handleReturn(e) {
+        async function handleReturn(e) {
             e.preventDefault();
             const contract = contracts.find(c => c.id === selectedContractId);
             const actualDate = new Date(document.getElementById('actualReturnDate').value);
@@ -770,9 +1012,7 @@
             const totalDeductions = lateFee + damageFee;
             const amountToReturnToClient = contract.totalDeposit - totalDeductions;
 
-            contract.status = 'closed';
-            contract.actualReturnDate = document.getElementById('actualReturnDate').value;
-            contract.finalBill = { 
+            const finalBill = { 
                 lateDays, 
                 lateFee, 
                 damageFee, 
@@ -783,8 +1023,20 @@
                     description: damageDesc
                 }
             };
+            
+            const updates = {
+                status: 'closed',
+                actualReturnDate: document.getElementById('actualReturnDate').value,
+                finalBill
+            };
 
-            saveContracts();
+            await dbUpdateContract(contract.id, updates);
+            
+            // تحديث محلي
+            contract.status = 'closed';
+            contract.actualReturnDate = updates.actualReturnDate;
+            contract.finalBill = updates.finalBill;
+
             renderContractDetails(selectedContractId);
         }
 
@@ -797,8 +1049,7 @@
             // تحديد نوع الطباعة (إيجار أو إرجاع)
             const isReturnInvoice = type === 'return';
             const docTitle = isReturnInvoice ? 'فاتورة إرجاع / مخالصة نهائية' : 'عقد إيجار';
-            const docDate = isReturnInvoice && contract.actualReturnDate ? contract.actualReturnDate : new Date().toISOString().split('T')[0];
-
+            
             let itemsHtml = contract.items.map(item => `
                 <tr style="border-bottom: 1px solid #ddd;">
                     <td style="padding: 8px;">${item.name}</td>
@@ -829,11 +1080,11 @@
 
             printArea.innerHTML = `
                 <div style="text-align: center; border-bottom: 2px solid #5C3A21; padding-bottom: 10px; margin-bottom: 20px;">
-                    <img src="icon.jpeg" style="width: 70px; height: 70px; object-fit: cover; border-radius: 50%; margin-bottom: 5px;" onerror="this.style.display='none'">
+                    <div style="font-family: 'Amiri', serif; font-size: 40px; color: #5C3A21; line-height: 1;">ف</div>
                     <h1 style="font-size: 24px; color: #5C3A21; margin: 0;">دار فريدة كوكب التراث</h1>
                     <h2 style="font-size: 18px; margin-top: 5px; color: #333; text-decoration: underline;">${docTitle}</h2>
                     <div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 12px; font-weight: bold;">
-                        <span>رقم العقد: #${contract.id.slice(-6)}</span>
+                        <span>رقم العقد: #${contract.id.toString().slice(-6)}</span>
                         <span>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')}</span>
                     </div>
                 </div>
@@ -916,7 +1167,9 @@
             window.print();
         }
 
-        renderDashboard();
+        // بدء التطبيق
+        // نحاول جلب العقود عند تحميل الصفحة
+        fetchContracts();
     </script>
 </body>
 </html>
